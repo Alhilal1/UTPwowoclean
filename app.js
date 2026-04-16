@@ -86,10 +86,12 @@ document.getElementById("form").addEventListener("submit", function (e) {
 });
 
 // ARCHIVE
-function archive(id) {
+function archive(id){
     api.patch(`/containers/${id}/archive`)
-        .then(() => loadData())
-        .catch(() => alert("Gagal archive"));
+        .then(() => {
+            alert("Berhasil archive");
+            loadData();
+        });
 }
 
 // DELETE
