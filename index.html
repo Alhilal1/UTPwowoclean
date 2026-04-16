@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WowoClean</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        h3 {
+            color: #444;
+        }
+
+        #total {
+            color: #2c7be5;
+            font-weight: bold;
+        }
+
+        #list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .status-active {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-archived {
+            color: red;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 6px 10px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .btn-archive {
+            background-color: orange;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: red;
+            color: white;
+        }
+
+        form {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .btn-submit {
+            background-color: #2c7be5;
+            color: white;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        #error {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>WowoClean</h1>
+
+<h3>Total Muatan: <span id="total">0</span> kg</h3>
+
+<div id="list"></div>
+
+<h3>Tambah Kontainer</h3>
+
+<form id="form">
+    <input type="text" id="container_id" placeholder="Container ID (contoh: GD12345)">
+    <input type="text" id="waste_type" placeholder="Waste Type">
+    <input type="number" id="weight" placeholder="Weight (kg)">
+    <button type="submit" class="btn-submit">Tambah</button>
+</form>
+
+<p id="error" style="color:red;"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
