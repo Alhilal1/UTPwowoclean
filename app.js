@@ -1,107 +1,274 @@
+const BASE_URL =
+"http://127.0.0.1:8000/api/v1";
+
+// AXIOS INSTANCE
 const api = axios.create({
-    baseURL: "http://127.0.0.1:8000/api"
+    baseURL: BASE_URL
 });
 
-//  LOAD DATA + TOTAL
-function loadData() {
-    api.get("/containers")
-        .then(res => {
-            const data = res.data;
-
-            let total = 0;
-            let html = "";
-
-            data.forEach(item => {
-                total += item.weight_kg;
-
-                html += `
-                    <div class="card">
-                        <b>${item.container_id}</b><br>
-                        Type: ${item.waste_type}<br>
-                        Weight: ${item.weight_kg} kg<br>
-                        Status: 
-                        <span class="${item.status === 'Active' ? 'status-active' : 'status-archived'}">
-                            ${item.status}
-                        </span>
-                        <br><br>
-
-                        <button class="btn-archive" onclick="archive('${item.container_id}')">
-                            Archive
-                        </button>
-
-                        <button class="btn-delete" onclick="hapus('${item.container_id}')">
-                            Delete
-                        </button>
-                    </div>
-                `;
-            });
-
-            document.getElementById("list").innerHTML = html;
-            document.getElementById("total").innerText = total;
-        })
-        .catch(() => {
-            document.getElementById("list").innerHTML = "Gagal mengambil data";
-        });
+// AUTO LOGIN CHECK
+if(localStorage.getItem("token")){
+    showApp();
 }
 
-// CREATE DATA
-document.getElementById("form").addEventListener("submit", function (e) {
-    e.preventDefault();
+// LOGIN
+async function login(){
 
-    const container_id = document.getElementById("container_id").value;
-    const waste_type = document.getElementById("waste_type").value;
-    const weight = document.getElementById("weight").value;
+    try{
 
-    api.post("/containers", {
-        container_id: container_id,
-        waste_type: waste_type,
-        weight_kg: weight,
-        status: "Active"
-    })
-        .then(() => {
-            document.getElementById("error").innerText = "";
+        const response = await api.post(
+            "/login",
+            {
+                email:
+                    document.getElementById("email").value,
 
-            // reset form
-            document.getElementById("form").reset();
-
-            loadData();
-        })
-        .catch(err => {
-            let msg = "";
-
-            if (err.response?.data?.errors) {
-                const errors = err.response.data.errors;
-
-                for (let key in errors) {
-                    msg += errors[key][0] + "\n";
-                }
-            } else if (err.response?.data?.error) {
-                msg = err.response.data.error;
-            } else {
-                msg = "Validasi gagal";
+                password:
+                    document.getElementById("password").value
             }
+        );
 
-            document.getElementById("error").innerText = msg;
-        });
-});
+        // SAVE TOKEN
+        localStorage.setItem(
+            "token",
+            response.data.token
+        );
 
-// ARCHIVE
-function archive(id){
-    api.patch(`/containers/${id}/archive`)
-        .then(() => {
-            alert("Berhasil archive");
-            loadData();
-        });
-}
+        alert("Login berhasil");
 
-// DELETE
-function hapus(id) {
-    if (confirm("Yakin mau hapus data ini?")) {
-        api.delete(`/containers/${id}`)
-            .then(() => loadData())
-            .catch(() => alert("Gagal delete"));
+        showApp();
+
+    }catch(err){
+
+        console.log(err.response);
+
+        document.getElementById(
+            "loginError"
+        ).innerText =
+            err.response.data.message;
     }
 }
 
-// LOAD AWAL
-loadData();
+// SHOW APP
+function showApp(){
+
+    document.getElementById(
+        "loginSection"
+    ).style.display = "none";
+
+    document.getElementById(
+        "appSection"
+    ).style.display = "block";
+
+    loadData();
+}
+
+// LOGOUT
+function logout(){
+
+    localStorage.removeItem("token");
+
+    location.reload();
+}
+
+// AUTH HEADER
+function authHeader(){
+
+    return {
+        headers:{
+            Authorization:
+                `Bearer ${localStorage.getItem("token")}`
+        }
+    };
+}
+
+// LOAD DATA
+async function loadData(){
+
+    try{
+
+        const response = await api.get(
+            "/gateway/containers",
+            authHeader()
+        );
+
+        const data = response.data;
+
+        let html = "";
+
+        let total = 0;
+
+        data.forEach(container => {
+
+            total += container.weight_kg;
+
+            html += `
+                <div class="card">
+
+                    <h3>${container.container_id}</h3>
+
+                    <p>
+                        Waste Type:
+                        ${container.waste_type}
+                    </p>
+
+                    <p>
+                        Weight:
+                        ${container.weight_kg} KG
+                    </p>
+
+                    <p>
+                        Status:
+                        ${container.status}
+                    </p>
+
+                    <button onclick="archive(${container.id})">
+                        Archive
+                    </button>
+
+                    <button onclick="hapus(${container.id})">
+                        Delete
+                    </button>
+
+                </div>
+            `;
+        });
+
+        document.getElementById(
+            "containerList"
+        ).innerHTML = html;
+
+        document.getElementById(
+            "totalWeight"
+        ).innerText = total;
+
+    }catch(err){
+
+        console.log(err);
+    }
+}
+
+// CREATE CONTAINER
+document.getElementById(
+    "containerForm"
+).addEventListener(
+    "submit",
+    async function(e){
+
+        e.preventDefault();
+
+        try{
+
+            // CLEAR ERROR
+            document.getElementById(
+                "error"
+            ).innerHTML = "";
+
+            await api.post(
+                "/gateway/containers",
+                {
+                    container_id:
+                        document.getElementById("container_id").value,
+
+                    waste_type:
+                        document.getElementById("waste_type").value,
+
+                    weight_kg:
+                        document.getElementById("weight_kg").value,
+
+                    status:
+                        document.getElementById("status").value
+                },
+                authHeader()
+            );
+
+            alert("Container berhasil ditambah");
+
+            document.getElementById(
+                "containerForm"
+            ).reset();
+
+            loadData();
+
+        }catch(err){
+
+            // VALIDATION ERROR
+            if(err.response.data.errors){
+
+                let errors =
+                    err.response.data.errors;
+
+                let message = "";
+
+                for(let key in errors){
+
+                    message +=
+                        errors[key][0] + "<br>";
+                }
+
+                document.getElementById(
+                    "error"
+                ).innerHTML = message;
+
+            }else{
+
+                // OTHER ERROR
+                document.getElementById(
+                    "error"
+                ).innerHTML =
+                    err.response.data.message;
+            }
+        }
+    }
+);
+
+// ARCHIVE
+async function archive(id){
+
+    try{
+
+        await api.patch(
+            `/gateway/containers/${id}/archive`,
+            {},
+            authHeader()
+        );
+
+        alert(
+            "Container berhasil diarchive"
+        );
+
+        loadData();
+
+    }catch(err){
+
+        alert(
+            err.response.data.message
+        );
+    }
+}
+
+// DELETE
+async function hapus(id){
+
+    if(confirm("Yakin ingin hapus?")){
+
+        try{
+
+            await api.delete(
+                `/gateway/containers/${id}`,
+                authHeader()
+            );
+
+            alert(
+                "Container berhasil dihapus"
+            );
+
+            loadData();
+
+        }catch(err){
+
+            alert(
+                err.response.data.message
+            );
+        }
+    }
+}
